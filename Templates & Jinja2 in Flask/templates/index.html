@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body onload="greetUser()">
+    <div class="container">
+        <h1>Hello, <span class="highlight">{{ name }}</span>!</h1>
+        <p>Welcome to the <span class="highlight">{{ course }}</span> tutorial.</p>
+    </div>
+     <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
