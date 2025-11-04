@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row align-items-center">
+    <div class="col-md-6">
+      <h1 class="display-4">Welcome to Flask Login UI</h1>
+      <p class="lead">Simple authentication interface built with Flask and Bootstrap.</p>
+      <div class="mt-4">
+        {% if current_user.is_authenticated %}
+          {% if dashboard_url %}
+            <a href="{{ dashboard_url }}" class="btn btn-primary me-2">Dashboard</a>
+          {% endif %}
+          {% if logout_url %}
+            <a href="{{ logout_url }}" class="btn btn-outline-secondary">Logout</a>
+          {% endif %}
+        {% else %}
+          {% if login_url %}
+            <a href="{{ login_url }}" class="btn btn-primary me-2">Login</a>
+          {% endif %}
+          {% if register_url %}
+            <a href="{{ register_url }}" class="btn btn-outline-secondary">Register</a>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="col-md-6 text-center">
+      <img src="{{ url_for('static', filename='img/hero.svg') }}" alt="Illustration" class="img-fluid" style="max-height:320px;">
+    </div>
+  </div>
+  <hr class="my-5">
+  <div class="row">
+    <div class="col-md-4">
+      <h5>Secure</h5>
+      <p>Session-based authentication using Flask-Login.</p>
+    </div>
+    <div class="col-md-4">
+      <h5>Simple</h5>
+      <p>Minimal templates and routes to get you started quickly.</p>
+    </div>
+    <div class="col-md-4">
+      <h5>Extensible</h5>
+      <p>Plug in your user model and expand features as needed.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
