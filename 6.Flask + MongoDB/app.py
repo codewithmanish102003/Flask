@@ -1,83 +1,60 @@
 import os
-
-from bson import ObjectId
+from bson.errors import InvalidId
+from bson.objectid import ObjectId
 from flask import Flask, jsonify, request
 from pymongo import MongoClient
-from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
 app = Flask(__name__)
-# Use a more explicit default for local MongoDB
-MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017/flask_db')
-
-def get_db():
-    """Get database connection or return error response"""
-    global db
-    if db is None:
-        return None
-    return db
-
-try:
-    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-    # Test the connection
-    client.server_info()  # Will raise an exception if can't connect
-    db = client['flask_db']
-    print("MongoDB connected successfully!")
-except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-    print(f"Failed to connect to MongoDB: {e}")
-    db = None
+MONGO_URI = os.environ.get('MONGO_URI', 'mongodb://localhost:27017')
+client = MongoClient(MONGO_URI)
+db = client['flask_db']
 
 @app.route('/')
 def home():
-    if db is None:
-        return jsonify({'status': 'error', 'message': 'Database connection failed'}), 500
     try:
         db.command('ping')
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
     return "Mongo db connected successfully!"
 
-
 # create
 @app.route('/api/users', methods=['POST'])
 def create_user():
-    if db is None:
-        return jsonify({'status': 'error', 'message': 'Database connection failed'}), 500
-        
-    data = request.get_json()
-    name=data.get('name')
-    email=data.get('email')
-    age=data.get('age')
+    data = request.get_json() or {}
+    name = data.get('name')
+    email = data.get('email')
+    age = data.get('age')
 
-    if not name or not email or not age:
+    if not name or not email:
         return jsonify({'status': 'error', 'message': 'Missing required fields'}), 400
 
-    user = {
-        'name': name,
-        'email': email,
-        'age': age
-    }
+    user = {'name': name, 'email': email}
+    if age is not None:
+        try:
+            user['age'] = int(age)
+        except (ValueError, TypeError):
+            return jsonify({'status': 'error', 'message': 'Invalid age'}), 400
 
     try:
-        db.users.insert_one(user)
-        return jsonify({'status': 'success', 'message': 'User created successfully'}), 201
+        res = db.users.insert_one(user)
+        created = db.users.find_one({'_id': res.inserted_id})
+        created['id'] = str(created.pop('_id'))
+        return jsonify({'status': 'success', 'user': created}), 201
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-# read
+# read all
 @app.route('/api/users', methods=['GET'])
 def get_users():
-    if db is None:
-        return jsonify({'status': 'error', 'message': 'Database connection failed'}), 500
-        
     try:
         users = db.users.find()
         user_list = []
         for user in users:
             user_list.append({
                 'id': str(user['_id']),
-                'name': user['name'],
-                'email': user['email'],
-                'age': user['age']
+                'name': user.get('name'),
+                'email': user.get('email'),
+                'age': user.get('age')
             })
         return jsonify({'status': 'success', 'users': user_list}), 200
     except Exception as e:
@@ -86,101 +63,71 @@ def get_users():
 # read by id
 @app.route('/api/users/<user_id>', methods=['GET'])
 def get_user(user_id):
-    if db is None:
-        return jsonify({'status': 'error', 'message': 'Database connection failed'}), 500
-        
     try:
-        user = db.users.find_one({'_id':ObjectId(user_id)})
+        oid = ObjectId(user_id)
+    except (InvalidId, TypeError):
+        return jsonify({'status': 'error', 'message': 'Invalid id'}), 400
+
+    try:
+        user = db.users.find_one({'_id': oid})
         if user:
             return jsonify({
                 'id': str(user['_id']),
-                'name': user['name'],
-                'email': user['email'],
-                'age': user['age']
+                'name': user.get('name'),
+                'email': user.get('email'),
+                'age': user.get('age')
             }), 200
         else:
             return jsonify({'status': 'error', 'message': 'User not found'}), 404
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-# update by id
-# update
-from bson.errors import InvalidId
-
-
-# 🔹 UPDATE USER
-@app.route('/api/users/<user_id>', methods=['PUT'])
+# update by id (partial allowed)
+@app.route('/api/users/update/<user_id>', methods=['PUT'])
 def update_user(user_id):
-    if db is None:
-        return jsonify({'status': 'error', 'message': 'Database connection failed'}), 500
-        
     try:
-        data = request.get_json()
+        oid = ObjectId(user_id)
+    except (InvalidId, TypeError):
+        return jsonify({'status': 'error', 'message': 'Invalid id'}), 400
 
-        if not data:
-            return jsonify({'status': 'error', 'message': 'Empty request body'}), 400
-
-        # Build update dictionary dynamically
-        update_data = {k: v for k, v in data.items() if v is not None}
-
-        if not update_data:
-            return jsonify({'status': 'error', 'message': 'No fields to update'}), 400
-
-        # Convert string ID to ObjectId safely
+    data = request.get_json() or {}
+    update = {}
+    if 'name' in data:
+        update['name'] = data['name']
+    if 'email' in data:
+        update['email'] = data['email']
+    if 'age' in data:
         try:
-            oid = ObjectId(user_id)
-        except InvalidId:
-            return jsonify({'status': 'error', 'message': 'Invalid user ID format'}), 400
+            update['age'] = int(data['age'])
+        except (ValueError, TypeError):
+            return jsonify({'status': 'error', 'message': 'Invalid age'}), 400
 
-        result = db.users.update_one({'_id': oid}, {'$set': update_data})
+    if not update:
+        return jsonify({'status': 'error', 'message': 'Provide at least one field to update'}), 400
 
-        if result.matched_count == 0:
+    try:
+        res = db.users.update_one({'_id': oid}, {'$set': update})
+        if res.matched_count == 0:
             return jsonify({'status': 'error', 'message': 'User not found'}), 404
-
-        updated_user = db.users.find_one({'_id': oid})
-        if updated_user:
-            updated_user['_id'] = str(updated_user['_id'])
-            return jsonify({'status': 'success', 'message': 'User updated successfully', 'user': updated_user}), 200
-        else:
-            return jsonify({'status': 'error', 'message': 'User not found after update'}), 404
-
+        user = db.users.find_one({'_id': oid})
+        user['id'] = str(user.pop('_id'))
+        return jsonify({'status': 'success', 'user': user}), 200
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-
-# 🔹 DELETE USER
-@app.route('/api/users/<user_id>', methods=['DELETE'])
+# delete
+@app.route('/api/users/delete/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
-    if db is None:
-        return jsonify({'status': 'error', 'message': 'Database connection failed'}), 500
-        
     try:
-        # Convert ID safely
-        try:
-            oid = ObjectId(user_id)
-        except InvalidId:
-            return jsonify({'status': 'error', 'message': 'Invalid user ID format'}), 400
+        oid = ObjectId(user_id)
+    except (InvalidId, TypeError):
+        return jsonify({'status': 'error', 'message': 'Invalid id'}), 400
 
-        # Find the user before deleting to return their info
-        user = db.users.find_one({'_id': oid})
-        if not user:
+    try:
+        res = db.users.delete_one({'_id': oid})
+        if res.deleted_count == 0:
             return jsonify({'status': 'error', 'message': 'User not found'}), 404
-            
-        # Format user data before deletion
-        user_data = {
-            'id': str(user['_id']),
-            'name': user['name'],
-            'email': user['email'],
-            'age': user['age']
-        }
-
-        result = db.users.delete_one({'_id': oid})
-
-        if result.deleted_count == 0:
-            return jsonify({'status': 'error', 'message': 'User not found'}), 404
-
-        return jsonify({'status': 'success', 'message': 'User deleted successfully', 'user': user_data}), 200
-
+        return jsonify({'status': 'success', 'message': 'User deleted successfully'}), 200
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
