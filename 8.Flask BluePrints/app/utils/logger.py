@@ -12,24 +12,21 @@ def setup_logging(app):
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
     
-    # Configure root logger
     logging.basicConfig(
         level=app.config['LOG_LEVEL'],
         format='%(asctime)s %(levelname)s %(name)s %(message)s'
     )
-    
-    # Create file handler for general logs
+
     file_handler = RotatingFileHandler(
         app.config['LOG_FILE'], 
-        maxBytes=10240000,  # 10MB
+        maxBytes=10240000, 
         backupCount=10
     )
     file_handler.setFormatter(logging.Formatter(
         '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
     ))
     file_handler.setLevel(app.config['LOG_LEVEL'])
-    
-    # Add handler to app logger
+  
     app.logger.addHandler(file_handler)
     app.logger.setLevel(app.config['LOG_LEVEL'])
     app.logger.info('Application startup')
