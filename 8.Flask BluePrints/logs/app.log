@@ -12,3 +12,7 @@
 2025-11-18 00:03:36,170 INFO: Flask application initialized [in D:\Visual Studio Code\Flask\8.Flask BluePrints\app\__init__.py:40]
 2025-11-18 00:03:38,827 INFO: Application startup [in D:\Visual Studio Code\Flask\8.Flask BluePrints\app\utils\logger.py:35]
 2025-11-18 00:03:38,831 INFO: Flask application initialized [in D:\Visual Studio Code\Flask\8.Flask BluePrints\app\__init__.py:40]
+2025-11-18 00:04:05,123 INFO: Application startup [in D:\Visual Studio Code\Flask\8.Flask BluePrints\app\utils\logger.py:35]
+2025-11-18 00:04:05,126 INFO: Flask application initialized [in D:\Visual Studio Code\Flask\8.Flask BluePrints\app\__init__.py:40]
+2025-11-18 00:04:06,051 INFO: Application startup [in D:\Visual Studio Code\Flask\8.Flask BluePrints\app\utils\logger.py:35]
+2025-11-18 00:04:06,055 INFO: Flask application initialized [in D:\Visual Studio Code\Flask\8.Flask BluePrints\app\__init__.py:40]
