@@ -8,7 +8,6 @@ def get_profile():
 
 @user_bp.route('/health', methods=['GET'])
 def health_check():
-    # Simple health check endpoint
     return jsonify({
         "status": "healthy",
         "message": "Flask application is running"

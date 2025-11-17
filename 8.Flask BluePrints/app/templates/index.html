@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+        <div class="bg-white rounded-lg shadow px-4 py-5 sm:p-6">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Welcome to Flask App</h1>
+            <p class="text-gray-600 mb-6">This is a Flask application with authentication features.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-blue-50 p-6 rounded-lg">
+                    <h2 class="text-xl font-semibold text-blue-800 mb-2">Features</h2>
+                    <ul class="list-disc list-inside text-gray-600 space-y-1">
+                        <li>User registration and login</li>
+                        <li>Password hashing for security</li>
+                        <li>JWT token authentication</li>
+                        <li>Role-based access control</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-green-50 p-6 rounded-lg">
+                    <h2 class="text-xl font-semibold text-green-800 mb-2">Get Started</h2>
+                    <p class="text-gray-600 mb-4">Sign up for an account to access all features.</p>
+                    <div class="space-x-4">
+                        <a href="/register" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 inline-block">Register</a>
+                        <a href="/login" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 inline-block">Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

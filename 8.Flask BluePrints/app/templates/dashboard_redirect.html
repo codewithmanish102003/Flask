@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800">Redirecting...</h2>
+        <p class="text-gray-600 mb-4">Please wait while we redirect you to your dashboard.</p>
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get token from localStorage
+            const token = localStorage.getItem('token');
+            
+            if (token) {
+                // Sync token to session
+                fetch('/set-session-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: token })
+                }).then(function(response) {
+                    if (response.ok) {
+                        window.location.href = '/dashboard/protected';
+                    } else {
+                        window.location.href = '/login';
+                    }
+                }).catch(function(error) {
+                    console.error('Error syncing token:', error);
+                    window.location.href = '/login';
+                });
+            } else {
+                window.location.href = '/login';
+            }
+        });
+    </script>
+</body>
+</html>
