@@ -1,4 +1,5 @@
 import os
+
 from bson.errors import InvalidId
 from bson.objectid import ObjectId
 from flask import Flask, jsonify, request
@@ -38,6 +39,8 @@ def create_user():
     try:
         res = db.users.insert_one(user)
         created = db.users.find_one({'_id': res.inserted_id})
+        if created is None:
+            return jsonify({'status': 'error', 'message': 'Failed to retrieve created user'}), 500
         created['id'] = str(created.pop('_id'))
         return jsonify({'status': 'success', 'user': created}), 201
     except Exception as e:
@@ -110,6 +113,8 @@ def update_user(user_id):
         if res.matched_count == 0:
             return jsonify({'status': 'error', 'message': 'User not found'}), 404
         user = db.users.find_one({'_id': oid})
+        if user is None:
+            return jsonify({'status': 'error', 'message': 'Failed to retrieve updated user'}), 500
         user['id'] = str(user.pop('_id'))
         return jsonify({'status': 'success', 'user': user}), 200
     except Exception as e:
